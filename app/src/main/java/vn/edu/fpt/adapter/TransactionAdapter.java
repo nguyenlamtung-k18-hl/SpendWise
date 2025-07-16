@@ -22,10 +22,21 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
     
     private List<Transaction> transactions;
     private SimpleDateFormat dateFormat;
+    private OnTransactionClickListener listener;
+    
+    // Interface for handling transaction clicks
+    public interface OnTransactionClickListener {
+        void onTransactionClick(Transaction transaction);
+        void onTransactionLongClick(Transaction transaction);
+    }
     
     public TransactionAdapter() {
         this.transactions = new ArrayList<>();
         this.dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+    }
+    
+    public void setOnTransactionClickListener(OnTransactionClickListener listener) {
+        this.listener = listener;
     }
     
     @NonNull
@@ -74,6 +85,21 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             tvTransactionCategory = itemView.findViewById(R.id.tv_transaction_category);
             tvTransactionDate = itemView.findViewById(R.id.tv_transaction_date);
             tvTransactionAmount = itemView.findViewById(R.id.tv_transaction_amount);
+            
+            // Set click listeners
+            itemView.setOnClickListener(v -> {
+                if (listener != null && getAdapterPosition() != RecyclerView.NO_POSITION) {
+                    listener.onTransactionClick(transactions.get(getAdapterPosition()));
+                }
+            });
+            
+            itemView.setOnLongClickListener(v -> {
+                if (listener != null && getAdapterPosition() != RecyclerView.NO_POSITION) {
+                    listener.onTransactionLongClick(transactions.get(getAdapterPosition()));
+                    return true;
+                }
+                return false;
+            });
         }
         
         public void bind(Transaction transaction) {

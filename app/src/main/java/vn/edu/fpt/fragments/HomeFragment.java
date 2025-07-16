@@ -6,8 +6,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import vn.edu.fpt.R;
+import vn.edu.fpt.adapter.TransactionAdapter;
 import vn.edu.fpt.database.DatabaseHelper;
 import vn.edu.fpt.model.Transaction;
 
@@ -23,8 +26,11 @@ public class HomeFragment extends Fragment {
     private MaterialButton btnAddIncome;
     private MaterialButton btnAddExpense;
     private MaterialButton btnViewAll;
+    private RecyclerView rvRecentTransactions;
+    private TextView tvNoTransactions;
     
-    // Database
+    // Adapter and Database
+    private TransactionAdapter recentTransactionsAdapter;
     private DatabaseHelper databaseHelper;
 
     public HomeFragment() {
@@ -51,6 +57,7 @@ public class HomeFragment extends Fragment {
         
         // Load real data
         loadDashboardData();
+        loadRecentTransactions();
         
         return view;
     }
@@ -62,21 +69,76 @@ public class HomeFragment extends Fragment {
         btnAddIncome = view.findViewById(R.id.btn_add_income);
         btnAddExpense = view.findViewById(R.id.btn_add_expense);
         btnViewAll = view.findViewById(R.id.btn_view_all);
+        rvRecentTransactions = view.findViewById(R.id.rv_recent_transactions);
+        tvNoTransactions = view.findViewById(R.id.tv_no_transactions);
     }
     
     private void setupBasicUI() {
-        // Basic click listeners
+        // Setup recent transactions RecyclerView
+        setupRecentTransactionsRecyclerView();
+        
+        // Setup quick action click listeners
         btnAddIncome.setOnClickListener(v -> {
-            // TODO: Navigate to add transaction with income type
+            navigateToAddTransaction("income");
         });
         
         btnAddExpense.setOnClickListener(v -> {
-            // TODO: Navigate to add transaction with expense type
+            navigateToAddTransaction("expense");
         });
         
         btnViewAll.setOnClickListener(v -> {
-            // TODO: Navigate to transactions list
+            navigateToTransactions();
         });
+    }
+    
+    private void setupRecentTransactionsRecyclerView() {
+        // Set layout manager
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        rvRecentTransactions.setLayoutManager(layoutManager);
+        
+        // Initialize adapter
+        recentTransactionsAdapter = new TransactionAdapter();
+        rvRecentTransactions.setAdapter(recentTransactionsAdapter);
+        
+        // Disable nested scrolling for smooth scrolling in parent ScrollView
+        rvRecentTransactions.setNestedScrollingEnabled(false);
+    }
+    
+    private void loadRecentTransactions() {
+        // Load recent transactions (limit to 5)
+        List<Transaction> recentTransactions = databaseHelper.getRecentTransactions(5);
+        
+        // Update adapter
+        recentTransactionsAdapter.updateTransactions(recentTransactions);
+        
+        // Show/hide empty state
+        updateRecentTransactionsVisibility(recentTransactions.isEmpty());
+    }
+    
+    private void updateRecentTransactionsVisibility(boolean isEmpty) {
+        if (isEmpty) {
+            rvRecentTransactions.setVisibility(View.GONE);
+            tvNoTransactions.setVisibility(View.VISIBLE);
+        } else {
+            rvRecentTransactions.setVisibility(View.VISIBLE);
+            tvNoTransactions.setVisibility(View.GONE);
+        }
+    }
+    
+    private void navigateToAddTransaction(String transactionType) {
+        // Get parent fragment (SpendWiseMainFragment) and navigate to add transaction
+        Fragment parentFragment = getParentFragment();
+        if (parentFragment instanceof SpendWiseMainFragment) {
+            ((SpendWiseMainFragment) parentFragment).navigateToAddTransaction(transactionType);
+        }
+    }
+    
+    private void navigateToTransactions() {
+        // Get parent fragment (SpendWiseMainFragment) and navigate to transactions
+        Fragment parentFragment = getParentFragment();
+        if (parentFragment instanceof SpendWiseMainFragment) {
+            ((SpendWiseMainFragment) parentFragment).navigateToTransactions();
+        }
     }
     
     private void loadDashboardData() {
@@ -100,6 +162,7 @@ public class HomeFragment extends Fragment {
     public void refreshData() {
         if (databaseHelper != null) {
             loadDashboardData();
+            loadRecentTransactions();
         }
     }
 
@@ -121,6 +184,9 @@ public class HomeFragment extends Fragment {
         btnAddIncome = null;
         btnAddExpense = null;
         btnViewAll = null;
+        rvRecentTransactions = null;
+        tvNoTransactions = null;
+        recentTransactionsAdapter = null;
         databaseHelper = null;
     }
 } 

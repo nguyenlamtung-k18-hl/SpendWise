@@ -157,8 +157,11 @@ public class AddTransactionFragment extends Fragment {
                 Toast.makeText(getActivity(), "Giao dịch đã được lưu thành công!", Toast.LENGTH_SHORT).show();
                 clearForm();
                 
-                // TODO: Navigate back or refresh other fragments
-                // For now, just show success message
+                // Refresh other fragments
+                refreshOtherFragments();
+                
+                // Navigate back to home
+                navigateToHome();
             } else {
                 Toast.makeText(getActivity(), "Lỗi khi lưu giao dịch!", Toast.LENGTH_SHORT).show();
             }
@@ -252,5 +255,21 @@ public class AddTransactionFragment extends Fragment {
         databaseHelper = null;
         currentCategories = null;
         selectedCategory = null;
+    }
+
+    private void refreshOtherFragments() {
+        // Get parent fragment (SpendWiseMainFragment) and refresh all fragments
+        Fragment parentFragment = getParentFragment();
+        if (parentFragment instanceof SpendWiseMainFragment) {
+            ((SpendWiseMainFragment) parentFragment).refreshAllFragments();
+        }
+    }
+    
+    private void navigateToHome() {
+        // Get parent fragment (SpendWiseMainFragment) and navigate to home
+        Fragment parentFragment = getParentFragment();
+        if (parentFragment instanceof SpendWiseMainFragment) {
+            ((SpendWiseMainFragment) parentFragment).navigateToHome();
+        }
     }
 } 

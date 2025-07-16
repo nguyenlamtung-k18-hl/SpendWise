@@ -1,17 +1,26 @@
 package vn.edu.fpt.fragments;
 
+import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import vn.edu.fpt.R;
+import vn.edu.fpt.adapter.CategoryStatsAdapter;
 import vn.edu.fpt.database.DatabaseHelper;
 import vn.edu.fpt.model.CategoryStats;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class ReportsFragment extends Fragment {
 
@@ -19,9 +28,20 @@ public class ReportsFragment extends Fragment {
     private TextView tvTotalIncome;
     private TextView tvTotalExpense;
     private TextView tvNetBalance;
+    private ChipGroup chipGroupPeriod;
+    private Chip chipThisMonth, chipThisYear, chipCustom;
+    private RecyclerView rvCategoryBreakdown;
+    private TextView tvNoData;
     
-    // Database
+    // Adapters and Database
+    private CategoryStatsAdapter categoryStatsAdapter;
     private DatabaseHelper databaseHelper;
+    
+    // Period tracking
+    private String currentPeriod = "month"; // "month", "year", "custom"
+    private Calendar customStartDate;
+    private Calendar customEndDate;
+    private SimpleDateFormat dateFormat;
 
     public ReportsFragment() {
     }
@@ -39,6 +59,14 @@ public class ReportsFragment extends Fragment {
         // Initialize database
         databaseHelper = DatabaseHelper.getInstance(getActivity());
         
+        // Initialize date formatter
+        dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        
+        // Initialize custom date range to current month
+        customStartDate = Calendar.getInstance();
+        customEndDate = Calendar.getInstance();
+        setCurrentMonthRange();
+        
         initializeViews(view);
         setupBasicUI();
         loadReportsData();
@@ -50,27 +78,199 @@ public class ReportsFragment extends Fragment {
         tvTotalIncome = view.findViewById(R.id.tv_total_income);
         tvTotalExpense = view.findViewById(R.id.tv_total_expense);
         tvNetBalance = view.findViewById(R.id.tv_net_balance);
+        chipGroupPeriod = view.findViewById(R.id.chip_group_period);
+        chipThisMonth = view.findViewById(R.id.chip_this_month);
+        chipThisYear = view.findViewById(R.id.chip_this_year);
+        chipCustom = view.findViewById(R.id.chip_custom);
+        rvCategoryBreakdown = view.findViewById(R.id.rv_category_breakdown);
+        tvNoData = view.findViewById(R.id.tv_no_data);
     }
     
     private void setupBasicUI() {
-        // Basic UI setup if needed
+        // Setup category breakdown RecyclerView
+        setupCategoryBreakdownRecyclerView();
+        
+        // Setup time period filter
+        chipGroupPeriod.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.contains(R.id.chip_this_month)) {
+                currentPeriod = "month";
+                setCurrentMonthRange();
+                loadReportsData();
+            } else if (checkedIds.contains(R.id.chip_this_year)) {
+                currentPeriod = "year";
+                setCurrentYearRange();
+                loadReportsData();
+            } else if (checkedIds.contains(R.id.chip_custom)) {
+                currentPeriod = "custom";
+                showCustomDatePicker();
+            }
+        });
+    }
+    
+    private void setupCategoryBreakdownRecyclerView() {
+        // Set layout manager
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        rvCategoryBreakdown.setLayoutManager(layoutManager);
+        
+        // Initialize adapter
+        categoryStatsAdapter = new CategoryStatsAdapter();
+        rvCategoryBreakdown.setAdapter(categoryStatsAdapter);
+        
+        // Disable nested scrolling for smooth scrolling in parent ScrollView
+        rvCategoryBreakdown.setNestedScrollingEnabled(false);
+    }
+    
+    private void setCurrentMonthRange() {
+        Calendar now = Calendar.getInstance();
+        
+        // Start of current month
+        customStartDate.set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), 1, 0, 0, 0);
+        customStartDate.set(Calendar.MILLISECOND, 0);
+        
+        // End of current month
+        customEndDate.set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), 
+                         now.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
+        customEndDate.set(Calendar.MILLISECOND, 999);
+    }
+    
+    private void setCurrentYearRange() {
+        Calendar now = Calendar.getInstance();
+        
+        // Start of current year
+        customStartDate.set(now.get(Calendar.YEAR), Calendar.JANUARY, 1, 0, 0, 0);
+        customStartDate.set(Calendar.MILLISECOND, 0);
+        
+        // End of current year
+        customEndDate.set(now.get(Calendar.YEAR), Calendar.DECEMBER, 31, 23, 59, 59);
+        customEndDate.set(Calendar.MILLISECOND, 999);
+    }
+    
+    private void showCustomDatePicker() {
+        // Show start date picker first
+        DatePickerDialog startDatePicker = new DatePickerDialog(
+            getActivity(),
+            (view, year, month, day) -> {
+                customStartDate.set(year, month, day, 0, 0, 0);
+                customStartDate.set(Calendar.MILLISECOND, 0);
+                showEndDatePicker();
+            },
+            customStartDate.get(Calendar.YEAR),
+            customStartDate.get(Calendar.MONTH),
+            customStartDate.get(Calendar.DAY_OF_MONTH)
+        );
+        
+        startDatePicker.setTitle("Select Start Date");
+        startDatePicker.show();
+    }
+    
+    private void showEndDatePicker() {
+        DatePickerDialog endDatePicker = new DatePickerDialog(
+            getActivity(),
+            (view, year, month, day) -> {
+                customEndDate.set(year, month, day, 23, 59, 59);
+                customEndDate.set(Calendar.MILLISECOND, 999);
+                
+                // Validate date range
+                if (customEndDate.before(customStartDate)) {
+                    Toast.makeText(getActivity(), "End date cannot be before start date", Toast.LENGTH_SHORT).show();
+                    // Reset to current month
+                    setCurrentMonthRange();
+                    chipThisMonth.setChecked(true);
+                    currentPeriod = "month";
+                } else {
+                    // Update chip text to show date range
+                    String rangeText = dateFormat.format(customStartDate.getTime()) + 
+                                     " - " + dateFormat.format(customEndDate.getTime());
+                    chipCustom.setText(rangeText);
+                }
+                
+                loadReportsData();
+            },
+            customEndDate.get(Calendar.YEAR),
+            customEndDate.get(Calendar.MONTH),
+            customEndDate.get(Calendar.DAY_OF_MONTH)
+        );
+        
+        endDatePicker.setTitle("Select End Date");
+        // Set minimum date to start date
+        endDatePicker.getDatePicker().setMinDate(customStartDate.getTimeInMillis());
+        endDatePicker.show();
     }
     
     private void loadReportsData() {
-        // Get current month for monthly stats
-        Calendar calendar = Calendar.getInstance();
-        int currentYear = calendar.get(Calendar.YEAR);
-        int currentMonth = calendar.get(Calendar.MONTH) + 1; // Calendar.MONTH is 0-based
+        double totalIncome, totalExpense;
         
-        // Load monthly financial data
-        double monthlyIncome = databaseHelper.getMonthlyIncome(currentYear, currentMonth);
-        double monthlyExpense = databaseHelper.getMonthlyExpense(currentYear, currentMonth);
-        double netBalance = monthlyIncome - monthlyExpense;
+        if (currentPeriod.equals("month")) {
+            // Current month data
+            Calendar calendar = Calendar.getInstance();
+            int currentYear = calendar.get(Calendar.YEAR);
+            int currentMonth = calendar.get(Calendar.MONTH) + 1;
+            
+            totalIncome = databaseHelper.getMonthlyIncome(currentYear, currentMonth);
+            totalExpense = databaseHelper.getMonthlyExpense(currentYear, currentMonth);
+            
+            // Load category breakdown for current month
+            loadCategoryBreakdown(currentYear, currentMonth);
+            
+        } else if (currentPeriod.equals("year")) {
+            // Current year data (sum all months)
+            Calendar calendar = Calendar.getInstance();
+            int currentYear = calendar.get(Calendar.YEAR);
+            
+            totalIncome = 0;
+            totalExpense = 0;
+            
+            for (int month = 1; month <= 12; month++) {
+                totalIncome += databaseHelper.getMonthlyIncome(currentYear, month);
+                totalExpense += databaseHelper.getMonthlyExpense(currentYear, month);
+            }
+            
+            // Load category breakdown for current year (use current month for now)
+            loadCategoryBreakdown(currentYear, calendar.get(Calendar.MONTH) + 1);
+            
+        } else {
+            // Custom date range - we need to implement this in DatabaseHelper
+            // For now, use current month as fallback
+            Calendar calendar = Calendar.getInstance();
+            int currentYear = calendar.get(Calendar.YEAR);
+            int currentMonth = calendar.get(Calendar.MONTH) + 1;
+            
+            totalIncome = databaseHelper.getMonthlyIncome(currentYear, currentMonth);
+            totalExpense = databaseHelper.getMonthlyExpense(currentYear, currentMonth);
+            
+            // Load category breakdown for current month
+            loadCategoryBreakdown(currentYear, currentMonth);
+            
+            // TODO: Implement custom date range queries in DatabaseHelper
+        }
+        
+        double netBalance = totalIncome - totalExpense;
         
         // Update UI with formatted values
-        tvTotalIncome.setText(formatVND(monthlyIncome));
-        tvTotalExpense.setText(formatVND(monthlyExpense));
+        tvTotalIncome.setText(formatVND(totalIncome));
+        tvTotalExpense.setText(formatVND(totalExpense));
         tvNetBalance.setText(formatVND(netBalance));
+    }
+    
+    private void loadCategoryBreakdown(int year, int month) {
+        // Load expense category statistics
+        List<CategoryStats> categoryStats = databaseHelper.getCategoryStats("expense", year, month);
+        
+        // Update adapter
+        categoryStatsAdapter.updateCategoryStats(categoryStats);
+        
+        // Show/hide empty state
+        updateCategoryBreakdownVisibility(categoryStats.isEmpty());
+    }
+    
+    private void updateCategoryBreakdownVisibility(boolean isEmpty) {
+        if (isEmpty) {
+            rvCategoryBreakdown.setVisibility(View.GONE);
+            tvNoData.setVisibility(View.VISIBLE);
+        } else {
+            rvCategoryBreakdown.setVisibility(View.VISIBLE);
+            tvNoData.setVisibility(View.GONE);
+        }
     }
     
     // Format currency in Vietnamese Dong
@@ -99,6 +299,16 @@ public class ReportsFragment extends Fragment {
         tvTotalIncome = null;
         tvTotalExpense = null;
         tvNetBalance = null;
+        chipGroupPeriod = null;
+        chipThisMonth = null;
+        chipThisYear = null;
+        chipCustom = null;
+        rvCategoryBreakdown = null;
+        tvNoData = null;
+        categoryStatsAdapter = null;
         databaseHelper = null;
+        customStartDate = null;
+        customEndDate = null;
+        dateFormat = null;
     }
 } 

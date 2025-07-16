@@ -89,6 +89,44 @@ public class SpendWiseMainFragment extends Fragment {
         transaction.commit();
     }
     
+    // Public navigation methods for child fragments to call
+    public void navigateToAddTransaction(String transactionType) {
+        // Create new instance or reuse existing
+        if (addTransactionFragment == null) {
+            addTransactionFragment = AddTransactionFragment.newInstance();
+        }
+        
+        // Set the transaction type if the fragment supports it
+        // For now, we'll navigate and let user select type manually
+        bottomNavigation.setSelectedItemId(R.id.nav_add);
+        replaceFragment(addTransactionFragment);
+        
+        // TODO: Pass transaction type to AddTransactionFragment when created
+    }
+    
+    public void navigateToTransactions() {
+        bottomNavigation.setSelectedItemId(R.id.nav_transactions);
+        showTransactionsFragment();
+    }
+    
+    public void navigateToHome() {
+        bottomNavigation.setSelectedItemId(R.id.nav_home);
+        showHomeFragment();
+    }
+    
+    public void refreshAllFragments() {
+        // Refresh fragments when data changes
+        if (homeFragment != null) {
+            homeFragment.refreshData();
+        }
+        if (transactionsFragment != null) {
+            transactionsFragment.refreshTransactions();
+        }
+        if (reportsFragment != null) {
+            reportsFragment.refreshReports();
+        }
+    }
+    
     // Lifecycle management
     @Override
     public void onPause() {
