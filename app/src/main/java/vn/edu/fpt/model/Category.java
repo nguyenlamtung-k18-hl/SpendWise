@@ -71,7 +71,7 @@ public class Category {
         try {
             return Color.parseColor(color);
         } catch (Exception e) {
-            // Default color nếu parse fail
+            // Default color
             return Color.parseColor("#2196F3");
         }
     }
@@ -82,7 +82,7 @@ public class Category {
     
     @Override
     public String toString() {
-        return name; // Cho Spinner display
+        return name;
     }
     
     @Override

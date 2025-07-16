@@ -11,8 +11,8 @@ public class Transaction {
     private double amount;
     private String description;
     private long categoryId;
-    private String categoryName; // For display purposes
-    private String categoryColor; // For UI colors
+    private String categoryName;
+    private String categoryColor; // UI colors
     private long date; // timestamp
     
     // Constructors
@@ -103,8 +103,7 @@ public class Transaction {
     public void setDate(long date) {
         this.date = date;
     }
-    
-    // Helper methods cho UI display
+
     public String getFormattedAmount() {
         NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         String prefix = isExpense() ? "-" : "+";
