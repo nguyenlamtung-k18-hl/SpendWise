@@ -11,7 +11,7 @@ import vn.edu.fpt.R;
 
 public class HomeFragment extends Fragment {
 
-    // UI Components - chỉ cần basic để show giao diện
+    // UI Components
     private TextView tvBalance;
     private TextView tvIncome;
     private TextView tvExpense;
@@ -20,14 +20,14 @@ public class HomeFragment extends Fragment {
     private MaterialButton btnViewAll;
 
     public HomeFragment() {
-        // Required empty public constructor
+
     }
 
     public static HomeFragment newInstance() {
         return new HomeFragment();
     }
 
-    // Fragment lifecycle theo pattern CannonGame - đơn giản
+    // Fragment lifecycle
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -56,7 +56,7 @@ public class HomeFragment extends Fragment {
         tvIncome.setText("$5,000.00");
         tvExpense.setText("$3,250.00");
         
-        // Basic click listeners - chỉ để test UI
+        // Basic click listeners
         btnAddIncome.setOnClickListener(v -> {
             // TODO: Navigate to add transaction
         });
@@ -70,7 +70,7 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    // Lifecycle management theo pattern CannonGame
+    // Lifecycle management
     @Override
     public void onDestroy() {
         super.onDestroy();

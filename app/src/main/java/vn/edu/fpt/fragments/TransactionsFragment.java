@@ -37,10 +37,10 @@ public class TransactionsFragment extends Fragment {
     }
     
     private void setupBasicUI() {
-        // Setup RecyclerView với layout manager - chỉ cấu trúc UI
+        // Set up RecyclerView
         rvTransactions.setLayoutManager(new LinearLayoutManager(getActivity()));
         
-        // TODO: Set adapter khi implement logic sau
+        // TODO: Set adapter
         // rvTransactions.setAdapter(adapter);
     }
     

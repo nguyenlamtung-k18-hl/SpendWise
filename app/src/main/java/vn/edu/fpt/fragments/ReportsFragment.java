@@ -28,7 +28,7 @@ public class ReportsFragment extends Fragment {
     }
     
     private void setupBasicUI() {
-        // TODO: Setup UI components khi implement
+        // TODO: Setup UI components
     }
     
     @Override

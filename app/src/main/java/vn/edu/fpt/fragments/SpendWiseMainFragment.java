@@ -17,7 +17,7 @@ public class SpendWiseMainFragment extends Fragment {
     private AddTransactionFragment addTransactionFragment;
     private ReportsFragment reportsFragment;
     
-    // Fragment quản lý toàn bộ navigation logic theo pattern CannonGame
+    // Factory method to create a new instance of this fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -89,7 +89,7 @@ public class SpendWiseMainFragment extends Fragment {
         transaction.commit();
     }
     
-    // Lifecycle management theo pattern CannonGame
+    // Lifecycle management
     @Override
     public void onPause() {
         super.onPause();
