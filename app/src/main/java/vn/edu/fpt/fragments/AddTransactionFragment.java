@@ -3,6 +3,7 @@ package vn.edu.fpt.fragments;
 import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,14 +15,18 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
 import vn.edu.fpt.R;
+import vn.edu.fpt.database.DatabaseHelper;
+import vn.edu.fpt.model.Category;
+import vn.edu.fpt.model.Transaction;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class AddTransactionFragment extends Fragment {
     
-    // UI Components - chỉ cần basic cho giao diện
+    // UI Components
     private ChipGroup chipGroupType;
     private Chip chipExpense;
     private Chip chipIncome;
@@ -31,11 +36,12 @@ public class AddTransactionFragment extends Fragment {
     private TextInputEditText etDate;
     private MaterialButton btnSaveTransaction;
     
-    // Form data - đơn giản
+    // Database & Data
+    private DatabaseHelper databaseHelper;
     private String transactionType = "expense"; // default
     private Calendar selectedDate;
-    private String[] expenseCategories = {"Food", "Transport", "Shopping", "Bills", "Entertainment", "Healthcare", "Other"};
-    private String[] incomeCategories = {"Salary", "Business", "Freelance", "Investment", "Gift", "Other"};
+    private List<Category> currentCategories;
+    private Category selectedCategory;
 
     public AddTransactionFragment() {
     }
@@ -44,12 +50,15 @@ public class AddTransactionFragment extends Fragment {
         return new AddTransactionFragment();
     }
 
-    // Fragment lifecycle theo pattern CannonGame - đơn giản
+    // Fragment lifecycle
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View view = inflater.inflate(R.layout.fragment_add_transaction, container, false);
+        
+        // Initialize database
+        databaseHelper = DatabaseHelper.getInstance(getActivity());
         
         // Initialize components
         initializeViews(view);
@@ -72,35 +81,139 @@ public class AddTransactionFragment extends Fragment {
     }
     
     private void setupBasicUI() {
-        // Setup UI cơ bản
+        // Setup initial UI
         updateDateDisplay();
-        updateCategoryOptions();
+        loadCategoriesFromDatabase();
         
-        // Basic event listeners
+        // Type selection listeners
         chipGroupType.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.contains(R.id.chip_expense)) {
                 transactionType = "expense";
-                updateCategoryOptions();
+                loadCategoriesFromDatabase();
             } else if (checkedIds.contains(R.id.chip_income)) {
                 transactionType = "income";
-                updateCategoryOptions();
+                loadCategoriesFromDatabase();
             }
         });
         
         // Date picker
         etDate.setOnClickListener(v -> showDatePicker());
         
-        // Save button - chỉ show toast để test UI
-        btnSaveTransaction.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "Transaction form UI working!", Toast.LENGTH_SHORT).show();
+        // Category selection
+        etCategory.setOnItemClickListener((parent, view, position, id) -> {
+            if (currentCategories != null && position < currentCategories.size()) {
+                selectedCategory = currentCategories.get(position);
+            }
         });
+        
+        // Save transaction button
+        btnSaveTransaction.setOnClickListener(v -> saveTransaction());
     }
     
-    private void updateCategoryOptions() {
-        String[] categories = transactionType.equals("expense") ? expenseCategories : incomeCategories;
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), 
-            android.R.layout.simple_dropdown_item_1line, categories);
-        etCategory.setAdapter(adapter);
+    private void loadCategoriesFromDatabase() {
+        currentCategories = databaseHelper.getCategoriesByType(transactionType);
+        
+        if (currentCategories != null && !currentCategories.isEmpty()) {
+            String[] categoryNames = new String[currentCategories.size()];
+            for (int i = 0; i < currentCategories.size(); i++) {
+                categoryNames[i] = currentCategories.get(i).getName();
+            }
+            
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), 
+                android.R.layout.simple_dropdown_item_1line, categoryNames);
+            etCategory.setAdapter(adapter);
+            
+            // Clear previous selection
+            etCategory.setText("");
+            selectedCategory = null;
+        }
+    }
+    
+    private void saveTransaction() {
+        // Validate input
+        if (!validateInput()) {
+            return;
+        }
+        
+        try {
+            // Parse amount
+            double amount = Double.parseDouble(etAmount.getText().toString().trim());
+            String description = etDescription.getText().toString().trim();
+            long timestamp = selectedDate.getTimeInMillis();
+            
+            // Create transaction
+            Transaction transaction = new Transaction(
+                transactionType,
+                amount,
+                description,
+                selectedCategory.getId(),
+                timestamp
+            );
+            
+            // Save to database
+            long result = databaseHelper.addTransaction(transaction);
+            
+            if (result > 0) {
+                Toast.makeText(getActivity(), "Giao dịch đã được lưu thành công!", Toast.LENGTH_SHORT).show();
+                clearForm();
+                
+                // TODO: Navigate back or refresh other fragments
+                // For now, just show success message
+            } else {
+                Toast.makeText(getActivity(), "Lỗi khi lưu giao dịch!", Toast.LENGTH_SHORT).show();
+            }
+            
+        } catch (NumberFormatException e) {
+            Toast.makeText(getActivity(), "Số tiền không hợp lệ!", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Có lỗi xảy ra: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private boolean validateInput() {
+        // Validate amount
+        if (TextUtils.isEmpty(etAmount.getText())) {
+            etAmount.setError("Vui lòng nhập số tiền");
+            return false;
+        }
+        
+        try {
+            double amount = Double.parseDouble(etAmount.getText().toString().trim());
+            if (amount <= 0) {
+                etAmount.setError("Số tiền phải lớn hơn 0");
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            etAmount.setError("Số tiền không hợp lệ");
+            return false;
+        }
+        
+        // Validate description
+        if (TextUtils.isEmpty(etDescription.getText())) {
+            etDescription.setError("Vui lòng nhập mô tả");
+            return false;
+        }
+        
+        // Validate category
+        if (selectedCategory == null) {
+            Toast.makeText(getActivity(), "Vui lòng chọn danh mục", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        
+        return true;
+    }
+    
+    private void clearForm() {
+        etAmount.setText("");
+        etDescription.setText("");
+        etCategory.setText("");
+        selectedCategory = null;
+        selectedDate = Calendar.getInstance();
+        updateDateDisplay();
+        // Reset to expense type
+        chipExpense.setChecked(true);
+        transactionType = "expense";
+        loadCategoriesFromDatabase();
     }
     
     private void showDatePicker() {
@@ -118,15 +231,15 @@ public class AddTransactionFragment extends Fragment {
     }
     
     private void updateDateDisplay() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         etDate.setText(dateFormat.format(selectedDate.getTime()));
     }
 
-    // Lifecycle management theo pattern CannonGame
+    // Lifecycle management
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Basic cleanup
+        // Cleanup
         chipGroupType = null;
         chipExpense = null;
         chipIncome = null;
@@ -136,5 +249,8 @@ public class AddTransactionFragment extends Fragment {
         etDate = null;
         btnSaveTransaction = null;
         selectedDate = null;
+        databaseHelper = null;
+        currentCategories = null;
+        selectedCategory = null;
     }
 } 

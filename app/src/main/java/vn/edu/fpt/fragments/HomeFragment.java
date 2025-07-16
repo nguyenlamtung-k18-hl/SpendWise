@@ -8,6 +8,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import com.google.android.material.button.MaterialButton;
 import vn.edu.fpt.R;
+import vn.edu.fpt.database.DatabaseHelper;
+import vn.edu.fpt.model.Transaction;
+
+import java.util.Calendar;
+import java.util.List;
 
 public class HomeFragment extends Fragment {
 
@@ -18,6 +23,9 @@ public class HomeFragment extends Fragment {
     private MaterialButton btnAddIncome;
     private MaterialButton btnAddExpense;
     private MaterialButton btnViewAll;
+    
+    // Database
+    private DatabaseHelper databaseHelper;
 
     public HomeFragment() {
 
@@ -34,9 +42,15 @@ public class HomeFragment extends Fragment {
         super.onCreateView(inflater, container, savedInstanceState);
         View view = inflater.inflate(R.layout.fragment_home, container, false);
         
+        // Initialize database
+        databaseHelper = DatabaseHelper.getInstance(getActivity());
+        
         // Initialize views
         initializeViews(view);
         setupBasicUI();
+        
+        // Load real data
+        loadDashboardData();
         
         return view;
     }
@@ -51,26 +65,52 @@ public class HomeFragment extends Fragment {
     }
     
     private void setupBasicUI() {
-        // Chỉ setup UI cơ bản, chưa cần logic
-        tvBalance.setText("$1,750.00");
-        tvIncome.setText("$5,000.00");
-        tvExpense.setText("$3,250.00");
-        
         // Basic click listeners
         btnAddIncome.setOnClickListener(v -> {
-            // TODO: Navigate to add transaction
+            // TODO: Navigate to add transaction with income type
         });
         
         btnAddExpense.setOnClickListener(v -> {
-            // TODO: Navigate to add transaction
+            // TODO: Navigate to add transaction with expense type
         });
         
         btnViewAll.setOnClickListener(v -> {
             // TODO: Navigate to transactions list
         });
     }
+    
+    private void loadDashboardData() {
+        // Load overall financial data
+        double totalIncome = databaseHelper.getTotalIncome();
+        double totalExpense = databaseHelper.getTotalExpense();
+        double currentBalance = databaseHelper.getCurrentBalance();
+        
+        // Update UI with formatted currency
+        tvBalance.setText(formatVND(currentBalance));
+        tvIncome.setText(formatVND(totalIncome));
+        tvExpense.setText(formatVND(totalExpense));
+    }
+    
+    // Format currency in Vietnamese Dong
+    private String formatVND(double amount) {
+        return String.format("%,.0f VNĐ", amount);
+    }
+    
+    // Public method to refresh data (called from other fragments)
+    public void refreshData() {
+        if (databaseHelper != null) {
+            loadDashboardData();
+        }
+    }
 
     // Lifecycle management
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh data when returning to fragment
+        refreshData();
+    }
+    
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -81,5 +121,6 @@ public class HomeFragment extends Fragment {
         btnAddIncome = null;
         btnAddExpense = null;
         btnViewAll = null;
+        databaseHelper = null;
     }
 } 
