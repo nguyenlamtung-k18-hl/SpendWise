@@ -14,8 +14,7 @@ public class Transaction {
     private String categoryName;
     private String categoryColor; // UI colors
     private long date; // timestamp
-    
-    // Constructors
+
     public Transaction() {
     }
     
@@ -38,8 +37,7 @@ public class Transaction {
         this.categoryColor = categoryColor;
         this.date = date;
     }
-    
-    // Getters and Setters
+
     public long getId() {
         return id;
     }

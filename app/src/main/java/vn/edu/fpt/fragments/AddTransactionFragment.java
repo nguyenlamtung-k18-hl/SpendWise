@@ -25,8 +25,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class AddTransactionFragment extends Fragment {
-    
-    // UI Components
+
     private ChipGroup chipGroupType;
     private Chip chipExpense;
     private Chip chipIncome;
@@ -35,8 +34,7 @@ public class AddTransactionFragment extends Fragment {
     private MaterialAutoCompleteTextView etCategory;
     private TextInputEditText etDate;
     private MaterialButton btnSaveTransaction;
-    
-    // Database & Data
+
     private DatabaseHelper databaseHelper;
     private String transactionType = "expense"; // default
     private Calendar selectedDate;
@@ -50,7 +48,6 @@ public class AddTransactionFragment extends Fragment {
         return new AddTransactionFragment();
     }
 
-    // Fragment lifecycle
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -81,11 +78,9 @@ public class AddTransactionFragment extends Fragment {
     }
     
     private void setupBasicUI() {
-        // Setup initial UI
         updateDateDisplay();
         loadCategoriesFromDatabase();
-        
-        // Type selection listeners
+
         chipGroupType.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.contains(R.id.chip_expense)) {
                 transactionType = "expense";
@@ -95,18 +90,15 @@ public class AddTransactionFragment extends Fragment {
                 loadCategoriesFromDatabase();
             }
         });
-        
-        // Date picker
+
         etDate.setOnClickListener(v -> showDatePicker());
-        
-        // Category selection
+
         etCategory.setOnItemClickListener((parent, view, position, id) -> {
             if (currentCategories != null && position < currentCategories.size()) {
                 selectedCategory = currentCategories.get(position);
             }
         });
-        
-        // Save transaction button
+
         btnSaveTransaction.setOnClickListener(v -> saveTransaction());
     }
     
@@ -122,26 +114,22 @@ public class AddTransactionFragment extends Fragment {
             ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), 
                 android.R.layout.simple_dropdown_item_1line, categoryNames);
             etCategory.setAdapter(adapter);
-            
-            // Clear previous selection
+
             etCategory.setText("");
             selectedCategory = null;
         }
     }
     
     private void saveTransaction() {
-        // Validate input
         if (!validateInput()) {
             return;
         }
         
         try {
-            // Parse amount
             double amount = Double.parseDouble(etAmount.getText().toString().trim());
             String description = etDescription.getText().toString().trim();
             long timestamp = selectedDate.getTimeInMillis();
-            
-            // Create transaction
+
             Transaction transaction = new Transaction(
                 transactionType,
                 amount,
@@ -149,18 +137,15 @@ public class AddTransactionFragment extends Fragment {
                 selectedCategory.getId(),
                 timestamp
             );
-            
-            // Save to database
+
             long result = databaseHelper.addTransaction(transaction);
             
             if (result > 0) {
                 Toast.makeText(getActivity(), "Giao dịch đã được lưu thành công!", Toast.LENGTH_SHORT).show();
                 clearForm();
-                
-                // Refresh other fragments
+
                 refreshOtherFragments();
-                
-                // Navigate back to home
+
                 navigateToHome();
             } else {
                 Toast.makeText(getActivity(), "Lỗi khi lưu giao dịch!", Toast.LENGTH_SHORT).show();
@@ -174,7 +159,6 @@ public class AddTransactionFragment extends Fragment {
     }
     
     private boolean validateInput() {
-        // Validate amount
         if (TextUtils.isEmpty(etAmount.getText())) {
             etAmount.setError("Vui lòng nhập số tiền");
             return false;
@@ -190,14 +174,12 @@ public class AddTransactionFragment extends Fragment {
             etAmount.setError("Số tiền không hợp lệ");
             return false;
         }
-        
-        // Validate description
+
         if (TextUtils.isEmpty(etDescription.getText())) {
             etDescription.setError("Vui lòng nhập mô tả");
             return false;
         }
-        
-        // Validate category
+
         if (selectedCategory == null) {
             Toast.makeText(getActivity(), "Vui lòng chọn danh mục", Toast.LENGTH_SHORT).show();
             return false;
@@ -213,7 +195,6 @@ public class AddTransactionFragment extends Fragment {
         selectedCategory = null;
         selectedDate = Calendar.getInstance();
         updateDateDisplay();
-        // Reset to expense type
         chipExpense.setChecked(true);
         transactionType = "expense";
         loadCategoriesFromDatabase();
@@ -238,11 +219,9 @@ public class AddTransactionFragment extends Fragment {
         etDate.setText(dateFormat.format(selectedDate.getTime()));
     }
 
-    // Lifecycle management
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Cleanup
         chipGroupType = null;
         chipExpense = null;
         chipIncome = null;
@@ -258,7 +237,6 @@ public class AddTransactionFragment extends Fragment {
     }
 
     private void refreshOtherFragments() {
-        // Get parent fragment (SpendWiseMainFragment) and refresh all fragments
         Fragment parentFragment = getParentFragment();
         if (parentFragment instanceof SpendWiseMainFragment) {
             ((SpendWiseMainFragment) parentFragment).refreshAllFragments();
@@ -266,7 +244,6 @@ public class AddTransactionFragment extends Fragment {
     }
     
     private void navigateToHome() {
-        // Get parent fragment (SpendWiseMainFragment) and navigate to home
         Fragment parentFragment = getParentFragment();
         if (parentFragment instanceof SpendWiseMainFragment) {
             ((SpendWiseMainFragment) parentFragment).navigateToHome();

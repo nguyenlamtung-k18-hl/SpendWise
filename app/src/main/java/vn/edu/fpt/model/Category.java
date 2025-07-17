@@ -7,8 +7,7 @@ public class Category {
     private String name;
     private String type; // "income" or "expense"
     private String color; // hex color code
-    
-    // Constructors
+
     public Category() {
     }
     
@@ -24,8 +23,7 @@ public class Category {
         this.type = type;
         this.color = color;
     }
-    
-    // Getters and Setters
+
     public long getId() {
         return id;
     }
@@ -57,8 +55,7 @@ public class Category {
     public void setColor(String color) {
         this.color = color;
     }
-    
-    // Helper methods
+
     public boolean isExpenseCategory() {
         return "expense".equals(type);
     }

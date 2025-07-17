@@ -65,15 +65,12 @@ public class TransactionsFragment extends Fragment implements TransactionAdapter
     }
     
     private void setupBasicUI() {
-        // Set up RecyclerView
         rvTransactions.setLayoutManager(new LinearLayoutManager(getActivity()));
-        
-        // Initialize and set adapter
+
         transactionAdapter = new TransactionAdapter();
         transactionAdapter.setOnTransactionClickListener(this);
         rvTransactions.setAdapter(transactionAdapter);
-        
-        // Setup filter chip listeners
+
         chipGroupFilter.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.contains(R.id.chip_all)) {
                 currentFilter = "all";
@@ -87,10 +84,8 @@ public class TransactionsFragment extends Fragment implements TransactionAdapter
     }
     
     private void loadTransactions() {
-        // Load all transactions from database
         allTransactions = databaseHelper.getAllTransactions();
-        
-        // Apply current filter
+
         applyFilter();
     }
     
@@ -103,11 +98,9 @@ public class TransactionsFragment extends Fragment implements TransactionAdapter
                 filteredTransactions.add(transaction);
             }
         }
-        
-        // Update adapter with filtered data
+
         transactionAdapter.updateTransactions(filteredTransactions);
-        
-        // Show/hide empty state
+
         updateEmptyState(filteredTransactions.isEmpty());
     }
     
@@ -120,11 +113,9 @@ public class TransactionsFragment extends Fragment implements TransactionAdapter
             layoutEmptyState.setVisibility(View.GONE);
         }
     }
-    
-    // Implement OnTransactionClickListener interface
+
     @Override
     public void onTransactionClick(Transaction transaction) {
-        // TODO: Show transaction details or navigate to edit screen
         Toast.makeText(getActivity(), "Clicked: " + transaction.getDescription(), Toast.LENGTH_SHORT).show();
     }
     
@@ -142,7 +133,6 @@ public class TransactionsFragment extends Fragment implements TransactionAdapter
         builder.setItems(options, (dialog, which) -> {
             switch (which) {
                 case 0: // Edit
-                    // TODO: Navigate to edit transaction screen
                     Toast.makeText(getActivity(), "Edit functionality will be implemented", Toast.LENGTH_SHORT).show();
                     break;
                 case 1: // Delete
@@ -175,10 +165,8 @@ public class TransactionsFragment extends Fragment implements TransactionAdapter
         
         if (result > 0) {
             Toast.makeText(getActivity(), "Transaction deleted successfully", Toast.LENGTH_SHORT).show();
-            // Refresh transactions list
             loadTransactions();
-            
-            // Notify other fragments to refresh their data
+
             notifyOtherFragmentsToRefresh();
         } else {
             Toast.makeText(getActivity(), "Failed to delete transaction", Toast.LENGTH_SHORT).show();
@@ -186,14 +174,12 @@ public class TransactionsFragment extends Fragment implements TransactionAdapter
     }
     
     private void notifyOtherFragmentsToRefresh() {
-        // Get parent fragment (SpendWiseMainFragment) and refresh all fragments
         Fragment parentFragment = getParentFragment();
         if (parentFragment instanceof SpendWiseMainFragment) {
             ((SpendWiseMainFragment) parentFragment).refreshAllFragments();
         }
     }
-    
-    // Public method to refresh data (called from other fragments)
+
     public void refreshTransactions() {
         if (databaseHelper != null && transactionAdapter != null) {
             loadTransactions();
@@ -203,7 +189,6 @@ public class TransactionsFragment extends Fragment implements TransactionAdapter
     @Override
     public void onResume() {
         super.onResume();
-        // Refresh data when returning to fragment
         refreshTransactions();
     }
     

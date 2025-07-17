@@ -12,8 +12,7 @@ public class CategoryStats {
         this.totalAmount = totalAmount;
         this.transactionCount = transactionCount;
     }
-    
-    // Getters
+
     public String getCategoryName() { return categoryName; }
     public String getCategoryColor() { return categoryColor; }
     public double getTotalAmount() { return totalAmount; }

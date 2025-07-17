@@ -16,7 +16,6 @@ import java.util.List;
 
 public class HomeFragment extends Fragment {
 
-    // UI Components
     private TextView tvBalance;
     private TextView tvIncome;
     private TextView tvExpense;
@@ -34,7 +33,6 @@ public class HomeFragment extends Fragment {
         return new HomeFragment();
     }
 
-    // Fragment lifecycle
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -47,8 +45,7 @@ public class HomeFragment extends Fragment {
         // Initialize views
         initializeViews(view);
         setupBasicUI();
-        
-        // Load real data
+
         loadDashboardData();
         
         return view;
@@ -82,12 +79,10 @@ public class HomeFragment extends Fragment {
     }
     
     private void loadDashboardData() {
-        // Load overall financial data
         double totalIncome = databaseHelper.getTotalIncome();
         double totalExpense = databaseHelper.getTotalExpense();
         double currentBalance = databaseHelper.getCurrentBalance();
-        
-        // Update UI with formatted currency
+
         tvBalance.setText(formatVND(currentBalance));
         tvIncome.setText(formatVND(totalIncome));
         tvExpense.setText(formatVND(totalExpense));
@@ -97,8 +92,7 @@ public class HomeFragment extends Fragment {
     private String formatVND(double amount) {
         return String.format("%,.0f VNĐ", amount);
     }
-    
-    // Public method to refresh data (called from other fragments)
+
     public void refreshData() {
         if (databaseHelper != null) {
             loadDashboardData();
@@ -109,14 +103,12 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Refresh data when returning to fragment
         refreshData();
     }
     
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Basic cleanup
         tvBalance = null;
         tvIncome = null;
         tvExpense = null;

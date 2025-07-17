@@ -88,20 +88,15 @@ public class SpendWiseMainFragment extends Fragment {
         transaction.replace(R.id.fragment_container, fragment);
         transaction.commit();
     }
-    
-    // Public navigation methods for child fragments to call
+
     public void navigateToAddTransaction(String transactionType) {
-        // Create new instance or reuse existing
         if (addTransactionFragment == null) {
             addTransactionFragment = AddTransactionFragment.newInstance();
         }
-        
-        // Set the transaction type if the fragment supports it
-        // For now, we'll navigate and let user select type manually
+
         bottomNavigation.setSelectedItemId(R.id.nav_add);
         replaceFragment(addTransactionFragment);
-        
-        // TODO: Pass transaction type to AddTransactionFragment when created
+
     }
     
     public void navigateToTransactions() {
@@ -126,12 +121,10 @@ public class SpendWiseMainFragment extends Fragment {
             reportsFragment.refreshReports();
         }
     }
-    
-    // Lifecycle management
+
     @Override
     public void onPause() {
         super.onPause();
-        // Cleanup khi fragment bị pause
         if (homeFragment != null && homeFragment.isAdded()) {
             homeFragment.onPause();
         }
@@ -140,7 +133,6 @@ public class SpendWiseMainFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Release resources khi fragment bị destroy
         homeFragment = null;
         transactionsFragment = null;
         addTransactionFragment = null;

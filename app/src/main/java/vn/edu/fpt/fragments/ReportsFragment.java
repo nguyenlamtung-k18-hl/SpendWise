@@ -21,17 +21,14 @@ import java.util.Locale;
 
 public class ReportsFragment extends Fragment {
 
-    // UI Components
     private TextView tvTotalIncome;
     private TextView tvTotalExpense;
     private TextView tvNetBalance;
     private ChipGroup chipGroupPeriod;
     private Chip chipThisMonth, chipThisYear, chipCustom;
-    
-    // Database
+
     private DatabaseHelper databaseHelper;
-    
-    // Period tracking
+
     private String currentPeriod = "month"; // "month", "year", "custom"
     private Calendar customStartDate;
     private Calendar customEndDate;
@@ -79,7 +76,7 @@ public class ReportsFragment extends Fragment {
     }
     
     private void setupBasicUI() {
-        // Setup time period filter
+        // filter
         chipGroupPeriod.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.contains(R.id.chip_this_month)) {
                 currentPeriod = "month";
@@ -98,12 +95,10 @@ public class ReportsFragment extends Fragment {
     
     private void setCurrentMonthRange() {
         Calendar now = Calendar.getInstance();
-        
-        // Start of current month
+
         customStartDate.set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), 1, 0, 0, 0);
         customStartDate.set(Calendar.MILLISECOND, 0);
-        
-        // End of current month
+
         customEndDate.set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), 
                          now.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
         customEndDate.set(Calendar.MILLISECOND, 999);
@@ -111,18 +106,15 @@ public class ReportsFragment extends Fragment {
     
     private void setCurrentYearRange() {
         Calendar now = Calendar.getInstance();
-        
-        // Start of current year
+
         customStartDate.set(now.get(Calendar.YEAR), Calendar.JANUARY, 1, 0, 0, 0);
         customStartDate.set(Calendar.MILLISECOND, 0);
-        
-        // End of current year
+
         customEndDate.set(now.get(Calendar.YEAR), Calendar.DECEMBER, 31, 23, 59, 59);
         customEndDate.set(Calendar.MILLISECOND, 999);
     }
     
     private void showCustomDatePicker() {
-        // Show start date picker first
         DatePickerDialog startDatePicker = new DatePickerDialog(
             getActivity(),
             (view, year, month, day) -> {
@@ -145,8 +137,7 @@ public class ReportsFragment extends Fragment {
             (view, year, month, day) -> {
                 customEndDate.set(year, month, day, 23, 59, 59);
                 customEndDate.set(Calendar.MILLISECOND, 999);
-                
-                // Validate date range
+
                 if (customEndDate.before(customStartDate)) {
                     Toast.makeText(getActivity(), "End date cannot be before start date", Toast.LENGTH_SHORT).show();
                     // Reset to current month
@@ -154,7 +145,6 @@ public class ReportsFragment extends Fragment {
                     chipThisMonth.setChecked(true);
                     currentPeriod = "month";
                 } else {
-                    // Update chip text to show date range
                     String rangeText = dateFormat.format(customStartDate.getTime()) + 
                                      " - " + dateFormat.format(customEndDate.getTime());
                     chipCustom.setText(rangeText);
@@ -168,7 +158,6 @@ public class ReportsFragment extends Fragment {
         );
         
         endDatePicker.setTitle("Select End Date");
-        // Set minimum date to start date
         endDatePicker.getDatePicker().setMinDate(customStartDate.getTimeInMillis());
         endDatePicker.show();
     }
@@ -177,7 +166,6 @@ public class ReportsFragment extends Fragment {
         double totalIncome, totalExpense;
         
         if (currentPeriod.equals("month")) {
-            // Current month data
             Calendar calendar = Calendar.getInstance();
             int currentYear = calendar.get(Calendar.YEAR);
             int currentMonth = calendar.get(Calendar.MONTH) + 1;
@@ -186,7 +174,6 @@ public class ReportsFragment extends Fragment {
             totalExpense = databaseHelper.getMonthlyExpense(currentYear, currentMonth);
             
         } else if (currentPeriod.equals("year")) {
-            // Current year data (sum all months)
             Calendar calendar = Calendar.getInstance();
             int currentYear = calendar.get(Calendar.YEAR);
             
@@ -199,7 +186,6 @@ public class ReportsFragment extends Fragment {
             }
             
         } else {
-            // Custom date range - use the actual custom date range
             long startTimestamp = customStartDate.getTimeInMillis();
             long endTimestamp = customEndDate.getTimeInMillis();
             
@@ -208,19 +194,16 @@ public class ReportsFragment extends Fragment {
         }
         
         double netBalance = totalIncome - totalExpense;
-        
-        // Update UI with formatted values
+
         tvTotalIncome.setText(formatVND(totalIncome));
         tvTotalExpense.setText(formatVND(totalExpense));
         tvNetBalance.setText(formatVND(netBalance));
     }
-    
-    // Format currency in Vietnamese Dong
+
     private String formatVND(double amount) {
         return String.format("%,.0f VNĐ", amount);
     }
-    
-    // Public method to refresh data (called from other fragments)
+
     public void refreshReports() {
         if (databaseHelper != null) {
             loadReportsData();
@@ -230,14 +213,12 @@ public class ReportsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Refresh data when returning to fragment
         refreshReports();
     }
     
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Cleanup
         tvTotalIncome = null;
         tvTotalExpense = null;
         tvNetBalance = null;
