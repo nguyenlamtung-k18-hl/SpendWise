@@ -8,12 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import vn.edu.fpt.R;
-import vn.edu.fpt.adapter.CategoryStatsAdapter;
 import vn.edu.fpt.database.DatabaseHelper;
 import vn.edu.fpt.model.CategoryStats;
 
@@ -30,11 +27,8 @@ public class ReportsFragment extends Fragment {
     private TextView tvNetBalance;
     private ChipGroup chipGroupPeriod;
     private Chip chipThisMonth, chipThisYear, chipCustom;
-    private RecyclerView rvCategoryBreakdown;
-    private TextView tvNoData;
     
-    // Adapters and Database
-    private CategoryStatsAdapter categoryStatsAdapter;
+    // Database
     private DatabaseHelper databaseHelper;
     
     // Period tracking
@@ -82,14 +76,9 @@ public class ReportsFragment extends Fragment {
         chipThisMonth = view.findViewById(R.id.chip_this_month);
         chipThisYear = view.findViewById(R.id.chip_this_year);
         chipCustom = view.findViewById(R.id.chip_custom);
-        rvCategoryBreakdown = view.findViewById(R.id.rv_category_breakdown);
-        tvNoData = view.findViewById(R.id.tv_no_data);
     }
     
     private void setupBasicUI() {
-        // Setup category breakdown RecyclerView
-        setupCategoryBreakdownRecyclerView();
-        
         // Setup time period filter
         chipGroupPeriod.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.contains(R.id.chip_this_month)) {
@@ -105,19 +94,6 @@ public class ReportsFragment extends Fragment {
                 showCustomDatePicker();
             }
         });
-    }
-    
-    private void setupCategoryBreakdownRecyclerView() {
-        // Set layout manager
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        rvCategoryBreakdown.setLayoutManager(layoutManager);
-        
-        // Initialize adapter
-        categoryStatsAdapter = new CategoryStatsAdapter();
-        rvCategoryBreakdown.setAdapter(categoryStatsAdapter);
-        
-        // Disable nested scrolling for smooth scrolling in parent ScrollView
-        rvCategoryBreakdown.setNestedScrollingEnabled(false);
     }
     
     private void setCurrentMonthRange() {
@@ -209,9 +185,6 @@ public class ReportsFragment extends Fragment {
             totalIncome = databaseHelper.getMonthlyIncome(currentYear, currentMonth);
             totalExpense = databaseHelper.getMonthlyExpense(currentYear, currentMonth);
             
-            // Load category breakdown for current month
-            loadCategoryBreakdown(currentYear, currentMonth);
-            
         } else if (currentPeriod.equals("year")) {
             // Current year data (sum all months)
             Calendar calendar = Calendar.getInstance();
@@ -225,23 +198,13 @@ public class ReportsFragment extends Fragment {
                 totalExpense += databaseHelper.getMonthlyExpense(currentYear, month);
             }
             
-            // Load category breakdown for current year (use current month for now)
-            loadCategoryBreakdown(currentYear, calendar.get(Calendar.MONTH) + 1);
-            
         } else {
-            // Custom date range - we need to implement this in DatabaseHelper
-            // For now, use current month as fallback
-            Calendar calendar = Calendar.getInstance();
-            int currentYear = calendar.get(Calendar.YEAR);
-            int currentMonth = calendar.get(Calendar.MONTH) + 1;
+            // Custom date range - use the actual custom date range
+            long startTimestamp = customStartDate.getTimeInMillis();
+            long endTimestamp = customEndDate.getTimeInMillis();
             
-            totalIncome = databaseHelper.getMonthlyIncome(currentYear, currentMonth);
-            totalExpense = databaseHelper.getMonthlyExpense(currentYear, currentMonth);
-            
-            // Load category breakdown for current month
-            loadCategoryBreakdown(currentYear, currentMonth);
-            
-            // TODO: Implement custom date range queries in DatabaseHelper
+            totalIncome = databaseHelper.getIncomeForDateRange(startTimestamp, endTimestamp);
+            totalExpense = databaseHelper.getExpenseForDateRange(startTimestamp, endTimestamp);
         }
         
         double netBalance = totalIncome - totalExpense;
@@ -250,27 +213,6 @@ public class ReportsFragment extends Fragment {
         tvTotalIncome.setText(formatVND(totalIncome));
         tvTotalExpense.setText(formatVND(totalExpense));
         tvNetBalance.setText(formatVND(netBalance));
-    }
-    
-    private void loadCategoryBreakdown(int year, int month) {
-        // Load expense category statistics
-        List<CategoryStats> categoryStats = databaseHelper.getCategoryStats("expense", year, month);
-        
-        // Update adapter
-        categoryStatsAdapter.updateCategoryStats(categoryStats);
-        
-        // Show/hide empty state
-        updateCategoryBreakdownVisibility(categoryStats.isEmpty());
-    }
-    
-    private void updateCategoryBreakdownVisibility(boolean isEmpty) {
-        if (isEmpty) {
-            rvCategoryBreakdown.setVisibility(View.GONE);
-            tvNoData.setVisibility(View.VISIBLE);
-        } else {
-            rvCategoryBreakdown.setVisibility(View.VISIBLE);
-            tvNoData.setVisibility(View.GONE);
-        }
     }
     
     // Format currency in Vietnamese Dong
@@ -303,9 +245,6 @@ public class ReportsFragment extends Fragment {
         chipThisMonth = null;
         chipThisYear = null;
         chipCustom = null;
-        rvCategoryBreakdown = null;
-        tvNoData = null;
-        categoryStatsAdapter = null;
         databaseHelper = null;
         customStartDate = null;
         customEndDate = null;

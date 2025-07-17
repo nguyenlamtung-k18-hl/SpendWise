@@ -299,6 +299,48 @@ public class DatabaseHelper {
         return total;
     }
     
+    // get income for custom date range
+    public double getIncomeForDateRange(long startTimestamp, long endTimestamp) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        
+        String query = "SELECT SUM(" + SpendWiseDatabase.COLUMN_AMOUNT + ") FROM " + 
+                      SpendWiseDatabase.TABLE_TRANSACTIONS + 
+                      " WHERE " + SpendWiseDatabase.COLUMN_TYPE + " = ?" +
+                      " AND " + SpendWiseDatabase.COLUMN_DATE + " >= ?" +
+                      " AND " + SpendWiseDatabase.COLUMN_DATE + " <= ?";
+        
+        Cursor cursor = db.rawQuery(query, new String[]{"income", String.valueOf(startTimestamp), String.valueOf(endTimestamp)});
+        double total = 0.0;
+        
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+        
+        cursor.close();
+        return total;
+    }
+    
+    // get expense for custom date range
+    public double getExpenseForDateRange(long startTimestamp, long endTimestamp) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        
+        String query = "SELECT SUM(" + SpendWiseDatabase.COLUMN_AMOUNT + ") FROM " + 
+                      SpendWiseDatabase.TABLE_TRANSACTIONS + 
+                      " WHERE " + SpendWiseDatabase.COLUMN_TYPE + " = ?" +
+                      " AND " + SpendWiseDatabase.COLUMN_DATE + " >= ?" +
+                      " AND " + SpendWiseDatabase.COLUMN_DATE + " <= ?";
+        
+        Cursor cursor = db.rawQuery(query, new String[]{"expense", String.valueOf(startTimestamp), String.valueOf(endTimestamp)});
+        double total = 0.0;
+        
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+        
+        cursor.close();
+        return total;
+    }
+    
     // get category statistics
     public List<CategoryStats> getCategoryStats(String type, int year, int month) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();

@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Layout chính theo pattern CannonGame - đơn giản và chỉ chứa fragment -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- Static fragment declaration giống CannonGame -->
     <fragment
         android:id="@+id/spendWiseMainFragment"
         android:name="vn.edu.fpt.fragments.SpendWiseMainFragment"
